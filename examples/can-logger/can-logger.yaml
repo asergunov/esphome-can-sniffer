@@ -29,6 +29,7 @@ time:
 
 packages:
   sdcard: !include sdcard.yaml
+  # the way to not duplicate code
   can1: !include
     file: canbus.yaml
     vars:
@@ -57,12 +58,6 @@ can_logger:
         log_id: 1
       - canbus_id: can2
         log_id: 2
-
-canbus:
-  - id: !extend can1
-    tx_mode: listen_only
-  - id: !extend can2
-    tx_mode: listen_only
 
 # Enable logging
 logger:

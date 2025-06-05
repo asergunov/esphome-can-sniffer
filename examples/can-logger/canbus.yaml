@@ -5,6 +5,7 @@ canbus:
     rx_pin: ${rx_pin}
     tx_pin: ${tx_pin}
     bit_rate: ${bit_rate}
+    tx_mode: listen_only
 
 sensor:
   - platform: esp32_can
