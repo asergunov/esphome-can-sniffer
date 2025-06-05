@@ -6,6 +6,14 @@ ESPHome components to build custom CAN Sniffer Firmware
 
 It's a set of example configurations, custom components, links to external modules to let you build firmware for your CAN Sniffer device.
 
+### Examples
+
+- [can-logger](examples/can-logger)
+
+### Components
+
+- [can-logger](components/can-logger)
+
 ## Why ESPHome?
 
 It let you code less.
