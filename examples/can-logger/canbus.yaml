@@ -1,0 +1,68 @@
+canbus:
+  - platform: esp32_can
+    id: ${canbus_id}
+    can_id: ${can_id}
+    rx_pin: ${rx_pin}
+    tx_pin: ${tx_pin}
+    bit_rate: ${bit_rate}
+
+sensor:
+  - platform: esp32_can
+    canbus_id:  ${canbus_id}
+    type: msgs_to_tx
+    name: ${canbus_name} msgs_to_tx
+  - platform: esp32_can
+    canbus_id:  ${canbus_id}
+    type: msgs_to_rx
+    name: ${canbus_name} msgs_to_rx
+  - platform: esp32_can
+    canbus_id:  ${canbus_id}
+    type: tx_error_counter
+    name: ${canbus_name} tx_error_counter
+  - platform: esp32_can
+    canbus_id:  ${canbus_id}
+    type: rx_error_counter
+    name: ${canbus_name} rx_error_counter
+  - platform: esp32_can
+    canbus_id:  ${canbus_id}
+    type: tx_failed_count
+    name: ${canbus_name} tx_failed_count
+  - platform: esp32_can
+    canbus_id:  ${canbus_id}
+    type: rx_missed_count
+    name: ${canbus_name} rx_missed_count
+  - platform: esp32_can
+    canbus_id:  ${canbus_id}
+    type: rx_overrun_count
+    name: ${canbus_name} rx_overrun_count
+  - platform: esp32_can
+    canbus_id:  ${canbus_id}
+    type: arb_lost_count
+    name: ${canbus_name} arb_lost_count
+  - platform: esp32_can
+    canbus_id:  ${canbus_id}
+    type: bus_error_count
+    name: ${canbus_name} bus_error_count
+
+text_sensor:
+  - platform: esp32_can
+    canbus_id:  ${canbus_id}
+    state:
+      name: ${canbus_name} State
+
+button:
+  - platform: template
+    name: ${canbus_name} Start
+    on_press: 
+      then:
+        - lambda: id(${canbus_id}).start();
+  - platform: template
+    name: ${canbus_name} Stop
+    on_press: 
+      then:
+        - lambda: id(${canbus_id}).stop();
+  - platform: template
+    name: ${canbus_name} Initiate recovery
+    on_press: 
+      then:
+        - lambda: id(${canbus_id}).initiate_recovery();
