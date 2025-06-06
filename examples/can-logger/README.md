@@ -36,33 +36,34 @@ api_encryption_key: ""
 
 ### Controller
 
-ESP32c6 is the only ESP32 SoC with two TWAI 2.0 controllers integrated for today. It doesn't have SDMMC controller so SDCard could be used only in SPI mode.
+ESP32C6 is the only ESP32 SoC with two TWAI 2.0 controllers integrated for today. It doesn't have SDMMC controller so SDCard could be used only in SPI mode.
 
 XIAO board has external antenna connector, 3.3v LDO.
 
 ### CAN Transceivers
 
-To don't add level shifters we need 3.3v compatible can transceivers. There was two options considered:
-
-- SN65HVD230
-- TJA1042T/3
-
-SN65HVD230 is 3.3v powered so it can't drive CANH to standard 3.5V. TJA1042T/3 has dual power supply so it could have 3.3v for logic and 5v for driving the bus.
+Here two TJA1042T/3 are used. See [Transceivers considerations](../../hardware/transceivers.md)
 
 ## Schematics
 
-- [Pin selecting considerations](../../esp32c6.md#pin-considerations)
+See [Pin selecting considerations](../../hardware/esp32c6.md#pin-considerations) for more info
+
+### Power
+
+For simplicity and safety sake is highly recommended to use Car USB power adapter. Make sure GND connected to Car Signal GND.
+
+See [Power supply considerations](../../hardware/power.md) for more info.
 
 ### Transceivers
 
-- CAN1_RX -> GPIO4
+- CAN1_RX -> GPIO4/MTMS
 - CAN1_TX -> GPIO16
 - CAN1_SLP -> GPIO9/BOOT
 - CAN1_GND -> GND
 - CAN1_VIO -> 3v3
 - CAN1_VCC -> 5v
 
-- CAN2_RX -> GPIO5
+- CAN2_RX -> GPIO5/MTDI
 - CAN2_TX -> GPIO17
 - CAN2_SLP -> GPIO9/BOOT
 - CAN2_GND -> GND
@@ -74,9 +75,9 @@ SN65HVD230 is 3.3v powered so it can't drive CANH to standard 3.5V. TJA1042T/3 h
 All the SD card pins except GND should have ~10K pull up resistors to 3.3V. Nice to have decoupling capacitor near the card.
 
 - DAT3 -> GPIO21, 10k pull up
-- CLK -> GPIO6, 10k pull up
+- CLK -> GPIO6/MTCK, 10k pull up
 - CMD -> GPIO2, 10k pull up
-- DAT0 -> GPIO7, 10k pull up
+- DAT0 -> GPIO7/MTDO, 10k pull up
 - VSS -> GND
 - VCC -> 3v3
 - DAT1 -> 10k pull up

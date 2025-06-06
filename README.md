@@ -6,6 +6,31 @@ ESPHome components to build custom CAN Sniffer Firmware
 
 It's a set of example configurations, custom components, links to external modules to let you build firmware for your CAN Sniffer device.
 
+### Examples
+
+- [CAN Logger](examples/can-logger/README.md) - Device to save logs to SDCard and host them over http.
+
+### Hardware
+
+- [General hardware design considerations for car devices](hardware/README.md)
+  - [Powering](hardware/power.md)
+  - [Transceivers](hardware/transceivers.md)
+  - [ESP32C6](hardware/esp32c6.md)
+
+## What's not in this repo?
+
+Patches to ESPHome components, custom components, external modules and other stuff that could be used in ESPHome.
+
+- [ESPHome](https://github.com/esphome/esphome)
+- ESPHome patches used in this repo:
+  - [ESPHome CAN Bus](https://github.com/asergunov/esphome_esphome/tree/tx_mode)
+- ESPHome Custom Components
+  - [SDCard and HTTP File server](https://github.com/asergunov/esphome_sd_card/tree/file-server)
+
+## Contributing
+
+If you have any questions, suggestions or want to contribute - feel free to open pull request.
+
 ## Why ESPHome?
 
 It let you code less.
@@ -35,6 +60,7 @@ Yes it is. But all works just fine without Home Assistant. If you have one - enj
     ```
 
 - Activate it
+
     Linux:
 
     ```sh
