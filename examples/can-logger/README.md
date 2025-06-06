@@ -62,7 +62,6 @@ See [Power supply considerations](../../hardware/power.md) for more info.
 - CAN1_GND -> GND
 - CAN1_VIO -> 3v3
 - CAN1_VCC -> 5v
-
 - CAN2_RX -> GPIO5/MTDI
 - CAN2_TX -> GPIO17
 - CAN2_SLP -> GPIO9/BOOT
