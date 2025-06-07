@@ -11,6 +11,8 @@ Device to save logs to SDCard and host them over http.
 
 ## Usage
 
+### Build and install
+
 Make `secrets.yaml` with your credentials:
 
 ```yaml
@@ -23,7 +25,12 @@ ota_password: ""
 api_encryption_key: ""
 ```
 
-- build and install firmware
+Build and install the firmware:
+
+```sh
+esphome run can-logger.yaml
+```
+
 - Connect transceivers to bus
 - Install SDCard
 - Power on device
