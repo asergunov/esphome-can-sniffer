@@ -10,6 +10,7 @@ external_components:
       - esp32_can
   - source: "github://asergunov/esphome_esphome@esp32-configuration"
     # to workaround idf version selection
+    components:
       - esp32
   - source: "github://asergunov/esphome-can-sniffer"
     components:
