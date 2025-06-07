@@ -8,6 +8,7 @@ external_components:
     # to let logger subscribe to TX events
       - canbus
       - esp32_can
+  - source: "github://asergunov/esphome_esphome@esp32-configuration"
     # to workaround idf version selection
       - esp32
   - source: "github://asergunov/esphome-can-sniffer"
@@ -20,7 +21,7 @@ esp32:
   flash_size: 4MB
   framework:
     type: esp-idf
-    version: 5.4.1
+    version: 5.4.1 # multiple can interfaces support since 5.2
     sdkconfig_options:
       CONFIG_ESPTOOLPY_FLASHSIZE_4MB: y
 
