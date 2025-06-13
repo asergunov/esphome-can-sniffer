@@ -29,6 +29,8 @@ Build and install the firmware:
 
 ```sh
 esphome run can-logger.yaml
+esphome run two-can-logger.yaml
+esphome run uart-logger.yaml
 ```
 
 - Connect transceivers to bus
