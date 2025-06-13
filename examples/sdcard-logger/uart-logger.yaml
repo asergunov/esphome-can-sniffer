@@ -42,7 +42,7 @@ sdcard_logger:
         log_id: 1
 
 uart_dump:
-    uart_id: lin_uart
+  - uart_id: lin_uart
 
 # Enable logging
 logger:
