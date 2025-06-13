@@ -1,17 +1,19 @@
-#include "can_logger.h"
+#include "sdcard_logger.h"
 
 #include "esphome/components/sd_mmc_card/sd_card.h"
 #include "esphome/core/log.h"
 #include "sys/_timeval.h"
 
+#include <cstdint>
 #include <cstdio>
 #include <inttypes.h>
 #include <sys/select.h>
+#include <vector>
 
 #ifdef USE_ESP_IDF
 
 namespace esphome {
-namespace can_logger {
+namespace sdcard_logger {
 
 static const char *const TAG = "can_logger";
 
@@ -44,10 +46,22 @@ void print_can_packet(sd_mmc_card::File &file, bool read, int log_id,
   }
 }
 
-void CanLogger::setup() {
+void SDCardLogger::setup() {
   switch (this->format_) {
   case Format::CRTD:
-    for (const auto &bus : this->busses_) {
+#ifdef USE_UART_DEBUGGER
+    for (auto &&bus : this->uart_busses_) {
+      bus.bus->add_debug_callback(
+          [&buffer = bus.buffer](uart::UARTDirection dir, uint8_t byte) {
+            if (buffer.empty() || buffer.back().direction != dir) {
+              buffer.emplace_back(dir);
+            }
+            buffer.back().bytes.push_back(byte);
+          });
+    }
+#endif
+#ifdef USE_CAN_DEBUGGER
+    for (const auto &bus : this->can_busses_) {
       bus.bus->add_callback([this, log_id = bus.log_id](
                                 uint32_t can_id, bool extended_id, bool rtr,
                                 const std::vector<uint8_t> &data) {
@@ -56,7 +70,6 @@ void CanLogger::setup() {
         print_can_packet(file, true, log_id, can_id, extended_id, rtr, data);
         fprintf(file, "\n");
       });
-#ifdef USE_CANBUS_TX_CALLBACK
       bus.bus->add_transmit_callback([this, log_id = bus.log_id](
                                          uint32_t can_id, bool extended_id,
                                          bool rtr,
@@ -66,8 +79,7 @@ void CanLogger::setup() {
         print_can_packet(file, false, log_id, can_id, extended_id, rtr, data);
         fprintf(file, "\n");
       });
-#endif
-#ifdef USE_ESP32_CAN_CONFIG_CALLBACK
+#ifdef USE_ESP32_CAN
       bus.bus->add_config_callback(
           [this, log_id = bus.log_id](const twai_general_config_t &g_config,
                                       const twai_timing_config_t &t_config,
@@ -95,21 +107,48 @@ void CanLogger::setup() {
                     g_config.rx_queue_len, g_config.alerts_enabled,
                     g_config.clkout_divider, g_config.intr_flags);
           });
-#endif
+#endif // USE_ESP32_CAN
     }
+#endif // USE_CAN_DEBUGGER
     break;
   default:
     ESP_LOGE(TAG, "Format unsupported");
     this->status_set_error();
   }
 }
-void CanLogger::loop() {}
-void CanLogger::dump_config() {}
 
-sd_mmc_card::File CanLogger::open_() {
+void SDCardLogger::loop() {
+  switch (this->format_) {
+  case Format::CRTD: {
+#ifdef USE_UART_DEBUGGER
+    auto &&file = this->open_();
+    for (auto &&bus : this->uart_busses_) {
+      if (bus.buffer.empty())
+        continue;
+      for (const auto &packet : bus.buffer) {
+        print_timestamp(file);
+        print_can_command(file, bus.log_id,
+                          packet.direction == uart::UART_DIRECTION_RX ? "R"
+                                                                      : "T");
+        for (const auto &byte : packet.bytes) {
+          fprintf(file, " %02X", byte);
+        }
+        fprintf(file, "\n");
+      }
+      bus.buffer.clear();
+    }
+#endif
+  } break;
+  default:
+    break;
+  }
+}
+void SDCardLogger::dump_config() {}
+
+sd_mmc_card::File SDCardLogger::open_() {
   return this->card_->open(this->path_.c_str(), "a");
 }
 
-} // namespace can_logger
+} // namespace sdcard_logger
 } // namespace esphome
 #endif // USE_ESP_IDF

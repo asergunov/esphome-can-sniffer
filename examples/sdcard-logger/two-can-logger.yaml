@@ -1,16 +1,16 @@
 esphome:
-  name: can-logger
+  name: two-can-logger
 
 external_components:
   - source: "github://asergunov/esphome_sd_card@file-server"
-  - source: "github://asergunov/esphome_esphome@tx_mode"
+  - source: "github://asergunov/esphome_esphome@multiple_can_esp32"
     components:
     # to let logger subscribe to TX events
       - canbus
       - esp32_can
   - source: "github://asergunov/esphome-can-sniffer"
     components:
-      - can_logger
+      - sdcard_logger
 
 esp32:
   board: esp32-c6-devkitm-1
@@ -48,7 +48,7 @@ packages:
       tx_pin: GPIO17
       bit_rate: 500KBPS
 
-can_logger:
+sdcard_logger:
   - file: 
       path: "/can.log"
       format: crtd
