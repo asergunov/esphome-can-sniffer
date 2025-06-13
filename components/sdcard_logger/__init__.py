@@ -12,24 +12,30 @@ from esphome.components.sd_mmc_card import (
     CONF_SD_MMC_CARD_ID,
     SdCard,
 )
-from esphome.components.esp32_can.canbus import ESP32Can
+from esphome.components.esp32_can.canbus import esp32_can
 from esphome.components.canbus import (
     CONF_CANBUS_ID,
     CanbusComponent,
 )
+from esphome.components.uart import (
+    CONF_UART_ID,
+    UARTComponent,
+    UART_DEVICE_SCHEMA,
+)
 from esphome.core import coroutine_with_priority
 
-DEPENDENCIES = ["sd_mmc_card", "canbus"]
+DEPENDENCIES = ["sd_mmc_card"]
 
 CONF_CAN = "can"
+CONF_UART = "uart"
 CONF_LOG_ID = "log_id"
 CONF_USE_ESP32_CAN = "use_esp32_can"
 
 FORMAT_CRTD = "crtd"
 
-can_logger_ns = cg.esphome_ns.namespace("can_logger")
-CanLogger = can_logger_ns.class_("CanLogger", cg.Component)
-Format = can_logger_ns.enum("Format", is_class=True)
+sdcard_logger_ns = cg.esphome_ns.namespace("sdcard_logger")
+SDCardLogger = sdcard_logger_ns.class_("SDCardLogger", cg.Component)
+Format = sdcard_logger_ns.enum("Format", is_class=True)
 
 
 def _validate_file(config):
@@ -41,11 +47,15 @@ def _validate_path(value):
 
 
 CONFIG_SCHEMA = cv.ensure_list({
-    cv.GenerateID(): cv.declare_id(CanLogger),
-    cv.Required(CONF_CAN): cv.ensure_list({
+    cv.GenerateID(): cv.declare_id(SDCardLogger),
+    cv.Optional(CONF_CAN): cv.ensure_list({
         cv.GenerateID(CONF_CANBUS_ID): cv.use_id(CanbusComponent),
         cv.Required(CONF_LOG_ID): cv.int_,
     }),
+    cv.Optional(CONF_UART): cv.ensure_list(
+        UART_DEVICE_SCHEMA.extend({
+            cv.Required(CONF_LOG_ID): cv.int_,
+        })),
     cv.Required(CONF_FILE): cv.Schema({
         cv.GenerateID(CONF_SD_MMC_CARD_ID): cv.use_id(SdCard),
         cv.Required(CONF_PATH): _validate_path,
@@ -71,6 +81,7 @@ def _final_validate(configs):
 
 FINAL_VALIDATE_SCHEMA = _final_validate
 
+
 @coroutine_with_priority(45.0)
 async def to_code(configs):
     for config in configs:
@@ -83,9 +94,15 @@ async def to_code(configs):
         format_ = config[CONF_FILE][CONF_FORMAT]
         cg.add(var.set_file(path, format_))
 
-        for canbus_config in config[CONF_CAN]:
+        for canbus_config in config.get(CONF_CAN, []):
             canbus = await cg.get_variable(canbus_config[CONF_CANBUS_ID])
             cg.add(var.add_canbus(canbus, canbus_config[CONF_LOG_ID]))
+            cg.add_define("USE_CAN_DEBUGGER")
+
+        for uart_config in config.get(CONF_UART, []):
+            uart = await cg.get_variable(uart_config[CONF_UART_ID])
+            cg.add(var.add_uart(uart, uart_config[CONF_LOG_ID]))
+            cg.add_define("USE_UART_DEBUGGER")
 
         if config.get(CONF_USE_ESP32_CAN):
             cg.add_define("USE_ESP32_CAN")
