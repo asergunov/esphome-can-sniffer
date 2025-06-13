@@ -5,24 +5,32 @@
 #include <vector>
 #ifdef USE_ESP_IDF
 
+#include "esphome/components/sd_mmc_card/sd_card.h"
+#include "esphome/core/component.h"
+
+#ifdef USE_CAN_DEBUGGER
 #ifdef USE_ESP32_CAN
 #include "esphome/components/esp32_can/esp32_can.h"
-#else
+#else // USE_ESP32_CAN
 #include "esphome/components/canbus/canbus.h"
-#endif
-#include "esphome/components/sd_mmc_card/sd_card.h"
+#endif // USE_ESP32_CAN
+#endif // USE_CAN_DEBUGGER
+
+#ifdef USE_UART_DEBUGGER
 #include "esphome/components/uart/uart_component.h"
-#include "esphome/core/component.h"
+#endif // USE_UART_DEBUGGER
 
 namespace esphome {
 namespace sdcard_logger {
 
+#ifdef USE_CAN_DEBUGGER
 using Canbus =
 #ifdef USE_ESP32_CAN
     esp32_can::ESP32Can;
-#else
+#else // USE_ESP32_CAN
     canbus::Canbus;
-#endif
+#endif // USE_ESP32_CAN
+#endif // USE_CAN_DEBUGGER
 
 enum class Format {
   CRTD,
@@ -39,10 +47,15 @@ public:
     this->path_ = path;
     this->format_ = format;
   }
+
+#ifdef USE_CAN_DEBUGGER
   void add_canbus(Canbus *canbus, int log_id) {
     this->can_busses_.emplace_back(canbus, log_id);
   }
+#endif
+#ifdef USE_UART_DEBUGGER
   void add_uart(uart::UARTComponent *uart, int log_id) {}
+#endif
   float get_setup_priority() const override { return setup_priority::DATA; }
 
 protected:
@@ -61,8 +74,9 @@ protected:
   struct ThrottlingInstance : public Instance<T> {
     std::vector<Item> buffer;
   };
-
+#ifdef USE_CAN_DEBUGGER
   std::vector<Instance<Canbus>> can_busses_;
+#endif
 #ifdef USE_UART_DEBUGGER
   struct UartItem {
     uart::UARTDirection direction;

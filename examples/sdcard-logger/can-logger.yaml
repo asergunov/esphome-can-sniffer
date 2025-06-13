@@ -1,16 +1,16 @@
 esphome:
-  name: can-logger
+  name: two-can-logger
 
 external_components:
   - source: "github://asergunov/esphome_sd_card@file-server"
-  - source: "github://asergunov/esphome_esphome@tx_mode"
+  - source: "github://asergunov/esphome_esphome@debug-callback"
     components:
     # to let logger subscribe to TX events
       - canbus
       - esp32_can
-  - source: "github://asergunov/esphome-can-sniffer"
+  - source: "../../components"
     components:
-      - can_logger
+      - sdcard_logger
 
 esp32:
   board: esp32-c6-devkitm-1
@@ -26,37 +26,25 @@ esp32:
 time:
   platform: sntp
 
-packages:
-  sdcard: !include sdcard.yaml
-  # the way to not duplicate code
-  can1: !include
-    file: canbus.yaml
-    vars:
-      canbus_id: can1
-      canbus_name: CAN1
-      can_id: 100
-      rx_pin: GPIO4
-      tx_pin: GPIO16
-      bit_rate: 500KBPS
-  can2: !include
-    file: canbus.yaml
-    vars:
-      canbus_id: can2
-      canbus_name: CAN2
-      can_id: 200
-      rx_pin: GPIO5
-      tx_pin: GPIO17
-      bit_rate: 500KBPS
+canbus:
+  - platform: esp32_can
+    id: can1
+    can_id: 100
+    rx_pin: GPIO4
+    tx_pin: GPIO16
+    bit_rate: 500KBPS
+    tx_mode: listen_only
 
-can_logger:
+sdcard_logger:
   - file: 
       path: "/can.log"
       format: crtd
     can:
       - canbus_id: can1
         log_id: 1
-      - canbus_id: can2
-        log_id: 2
+
+packages:
+  sdcard: !include sdcard.yaml
 
 # Enable logging
 logger:
@@ -80,13 +68,3 @@ wifi:
   ap:
     ssid: "Can-Logger Fallback Hotspot"
     password: !secret ap_password
-
-captive_portal:
-
-switch:
-  - platform: gpio
-    pin: GPIO9
-    name: Transceivers sleep
-  - platform: gpio
-    pin: GPIO14
-    name: External Antenna

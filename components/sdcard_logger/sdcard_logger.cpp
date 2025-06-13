@@ -1,7 +1,6 @@
 #include "sdcard_logger.h"
 
 #include "esphome/components/sd_mmc_card/sd_card.h"
-#include "esphome/components/uart/uart_component.h"
 #include "esphome/core/log.h"
 #include "sys/_timeval.h"
 
@@ -50,8 +49,8 @@ void print_can_packet(sd_mmc_card::File &file, bool read, int log_id,
 void SDCardLogger::setup() {
   switch (this->format_) {
   case Format::CRTD:
-    for (auto &&bus : this->uart_busses_) {
 #ifdef USE_UART_DEBUGGER
+    for (auto &&bus : this->uart_busses_) {
       bus.bus->add_debug_callback(
           [&buffer = bus.buffer](uart::UARTDirection dir, uint8_t byte) {
             if (buffer.empty() || buffer.back().direction != dir) {
@@ -59,10 +58,9 @@ void SDCardLogger::setup() {
             }
             buffer.back().bytes.push_back(byte);
           });
-#else
-      ESP_LOGE(TAG, "USE_UART_DEBUGGER is not set. UART logger will not work.");
-#endif
     }
+#endif
+#ifdef USE_CAN_DEBUGGER
     for (const auto &bus : this->can_busses_) {
       bus.bus->add_callback([this, log_id = bus.log_id](
                                 uint32_t can_id, bool extended_id, bool rtr,
@@ -72,7 +70,6 @@ void SDCardLogger::setup() {
         print_can_packet(file, true, log_id, can_id, extended_id, rtr, data);
         fprintf(file, "\n");
       });
-#ifdef USE_CAN_DEBUGGER
       bus.bus->add_transmit_callback([this, log_id = bus.log_id](
                                          uint32_t can_id, bool extended_id,
                                          bool rtr,
@@ -111,20 +108,19 @@ void SDCardLogger::setup() {
                     g_config.clkout_divider, g_config.intr_flags);
           });
 #endif // USE_ESP32_CAN
-#else  // USE_CAN_DEBUGGER
-      ESP_LOGW(TAG, "USE_CAN_DEBUGGER is not defined. Only RX will be logged "
-                    "for can bus");
-#endif // USE_CAN_DEBUGGER
     }
+#endif // USE_CAN_DEBUGGER
     break;
   default:
     ESP_LOGE(TAG, "Format unsupported");
     this->status_set_error();
   }
 }
+
 void SDCardLogger::loop() {
   switch (this->format_) {
   case Format::CRTD: {
+#ifdef USE_UART_DEBUGGER
     auto &&file = this->open_();
     for (auto &&bus : this->uart_busses_) {
       if (bus.buffer.empty())
@@ -141,6 +137,7 @@ void SDCardLogger::loop() {
       }
       bus.buffer.clear();
     }
+#endif
   } break;
   default:
     break;

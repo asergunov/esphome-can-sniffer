@@ -12,7 +12,7 @@ from esphome.components.sd_mmc_card import (
     CONF_SD_MMC_CARD_ID,
     SdCard,
 )
-from esphome.components.esp32_can.canbus import ESP32Can
+from esphome.components.esp32_can.canbus import esp32_can
 from esphome.components.canbus import (
     CONF_CANBUS_ID,
     CanbusComponent,
@@ -24,7 +24,7 @@ from esphome.components.uart import (
 )
 from esphome.core import coroutine_with_priority
 
-DEPENDENCIES = ["sd_mmc_card", "canbus", "uart"]
+DEPENDENCIES = ["sd_mmc_card"]
 
 CONF_CAN = "can"
 CONF_UART = "uart"
