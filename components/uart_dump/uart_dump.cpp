@@ -7,8 +7,8 @@ namespace uart_dump {
   void UARTDump::setup(){  }
   void UARTDump::loop(){
     while(this->uart_->available()) {
-        uint8_t data[256];
-        this->uart_->read_array(data, sizeof(data));
+        uint8_t data;
+        this->uart_->read_byte(&data);
     }
   }
   void UARTDump::dump_config(){}
