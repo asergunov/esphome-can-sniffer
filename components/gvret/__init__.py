@@ -4,7 +4,6 @@ import esphome.final_validate as fv
 from esphome.const import (
     CONF_ID,
 )
-from esphome.components.esp32_can.canbus import ESP32Can
 from esphome.components.canbus import (
     CONF_CANBUS_ID,
     CanbusComponent,
