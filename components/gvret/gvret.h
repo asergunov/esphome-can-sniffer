@@ -68,6 +68,7 @@ public:
   void setup() override;
   void loop() override;
   void dump_config() override;
+  float get_setup_priority() const override { return setup_priority::AFTER_WIFI; }
 
   void add_canbus(Canbus *canbus) { this->busses_.emplace_back(canbus); }
 protected:

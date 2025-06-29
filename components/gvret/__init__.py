@@ -14,11 +14,11 @@ DEPENDENCIES = ["canbus"]
 
 CONF_CAN = "can"
 
-gvert_ns = cg.esphome_ns.namespace("gvert")
-GVERTComponent = gvert_ns.class_("GVERTComponent", cg.Component)
+gvret_ns = cg.esphome_ns.namespace("gvret")
+GVERTComponent = gvret_ns.class_("GVERTComponent", cg.Component)
 
 
-CONFIG_SCHEMA = cv.ensure_list({
+CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(GVERTComponent),
     cv.Required(CONF_CAN): cv.ensure_list({
         cv.GenerateID(CONF_CANBUS_ID): cv.use_id(CanbusComponent),
@@ -27,12 +27,10 @@ CONFIG_SCHEMA = cv.ensure_list({
 
 
 @coroutine_with_priority(45.0)
-async def to_code(configs):
-    for config in configs:
-        var = cg.new_Pvariable(config[CONF_ID])
-        await cg.register_component(var, config)
-        
-        for canbus_config in config[CONF_CAN]:
-            canbus = await cg.get_variable(canbus_config[CONF_CANBUS_ID])
-            cg.add(var.add_canbus(canbus))
+async def to_code(config):
+    var = cg.new_Pvariable(config[CONF_ID])
+    await cg.register_component(var, config)
 
+    for canbus_config in config[CONF_CAN]:
+        canbus = await cg.get_variable(canbus_config[CONF_CANBUS_ID])
+        cg.add(var.add_canbus(canbus))
