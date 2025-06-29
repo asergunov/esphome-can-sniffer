@@ -27,7 +27,7 @@ namespace sdcard_logger {
 using Canbus =
 #ifdef USE_ESP32_CAN
     esp32_can::ESP32Can;
-#else // USE_ESP32_CAN
+#else  // USE_ESP32_CAN
     canbus::Canbus;
 #endif // USE_ESP32_CAN
 #endif // USE_CAN_DEBUGGER
@@ -54,7 +54,9 @@ public:
   }
 #endif
 #ifdef USE_UART_DEBUGGER
-  void add_uart(uart::UARTComponent *uart, int log_id) {}
+  void add_uart(uart::UARTComponent *uart, int log_id) {
+    this->uart_busses_.emplace_back(uart, log_id);
+  }
 #endif
   float get_setup_priority() const override { return setup_priority::DATA; }
 
@@ -72,6 +74,8 @@ protected:
 
   template <typename T, typename Item>
   struct ThrottlingInstance : public Instance<T> {
+    ThrottlingInstance(T *p, int log_id) : Instance<T>{p, log_id} {}
+
     std::vector<Item> buffer;
   };
 #ifdef USE_CAN_DEBUGGER

@@ -51,17 +51,23 @@ void SDCardLogger::setup() {
   case Format::CRTD:
 #ifdef USE_UART_DEBUGGER
     for (auto &&bus : this->uart_busses_) {
+      ESP_LOGCONFIG(TAG, "Registering UART bus. log_id: %d", bus.log_id);
       bus.bus->add_debug_callback(
           [&buffer = bus.buffer](uart::UARTDirection dir, uint8_t byte) {
             if (buffer.empty() || buffer.back().direction != dir) {
+              ESP_LOGVV(
+                  TAG,
+                  "Buffer is empty or direction doesn't match. Adding new one");
               buffer.emplace_back(dir);
             }
+            ESP_LOGVV(TAG, "Adding byte '0x%02X' to print out", byte);
             buffer.back().bytes.push_back(byte);
           });
     }
 #endif
 #ifdef USE_CAN_DEBUGGER
     for (const auto &bus : this->can_busses_) {
+      ESP_LOGCONFIG(TAG, "Registering CAN bus. log_id: %d", bus.log_id);
       bus.bus->add_callback([this, log_id = bus.log_id](
                                 uint32_t can_id, bool extended_id, bool rtr,
                                 const std::vector<uint8_t> &data) {
@@ -123,9 +129,17 @@ void SDCardLogger::loop() {
 #ifdef USE_UART_DEBUGGER
     auto &&file = this->open_();
     for (auto &&bus : this->uart_busses_) {
-      if (bus.buffer.empty())
+      ESP_LOGVV(TAG, "Printing out messages from UART bus. log_id: %d",
+                bus.log_id);
+      if (bus.buffer.empty()) {
+        ESP_LOGVV(TAG, "Buffer is empty. Continue");
         continue;
+      }
       for (const auto &packet : bus.buffer) {
+        ESP_LOGV(TAG, "Printing packet log_id: %d: direction %s, size %zu",
+                 bus.log_id,
+                 packet.direction == uart::UART_DIRECTION_RX ? "RX" : "TX",
+                 packet.bytes.size());
         print_timestamp(file);
         print_can_command(file, bus.log_id,
                           packet.direction == uart::UART_DIRECTION_RX ? "R"
@@ -135,6 +149,7 @@ void SDCardLogger::loop() {
         }
         fprintf(file, "\n");
       }
+      ESP_LOGVV(TAG, "Cleaning up the buffer");
       bus.buffer.clear();
     }
 #endif
