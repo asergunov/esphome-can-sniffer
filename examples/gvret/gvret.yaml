@@ -1,0 +1,64 @@
+esphome:
+  name: gvret
+
+external_components:
+  - source: "github://asergunov/esphome_esphome@extend_esp32_can"
+    components:
+    # to let logger subscribe to TX events
+      - canbus
+      - esp32_can
+  - source: "../../components"
+    components:
+      - gvret
+
+esp32:
+  board: esp32-c6-devkitm-1
+  variant: esp32c6
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+    version: 5.3.3 # multiple can interfaces support since 5.2
+    platform_version: 53.3.13
+    sdkconfig_options:
+      CONFIG_ESPTOOLPY_FLASHSIZE_4MB: y
+
+time:
+  platform: sntp
+
+canbus:
+  - platform: esp32_can
+    id: can1
+    can_id: 100
+    rx_pin: GPIO4
+    tx_pin: GPIO16
+    bit_rate: 500KBPS
+    tx_mode: no_ack
+
+gvret:
+  can:
+  - canbus_id: can1
+#   - canbus_id: can2 # if you have another one
+
+
+# Enable logging
+logger:
+  hardware_uart: USB_SERIAL_JTAG
+  # level: VERY_VERBOSE
+  logs: 
+    wifi: DEBUG
+
+api:
+  encryption: 
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+  ap:
+    ssid: "Can-Logger Fallback Hotspot"
+    password: !secret ap_password

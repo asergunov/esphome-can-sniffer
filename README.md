@@ -9,6 +9,7 @@ It's a set of example configurations, custom components, links to external modul
 ### Examples
 
 - [CAN Logger](examples/can-logger/README.md) - Device to save logs to SDCard and host them over http.
+- [GVRET Protocol](examples/gvret/README.md) - Use your device in [SavvyCAN](https://github.com/collin80/SavvyCAN) via GVRET protocol
 
 ### Hardware
 

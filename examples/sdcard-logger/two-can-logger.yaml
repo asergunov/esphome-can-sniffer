@@ -8,8 +8,7 @@ external_components:
     # to let logger subscribe to TX events
       - canbus
       - esp32_can
-    refresh: 1s
-  - source: "../../components"
+  - source: "github://asergunov/esphome-can-sniffer"
     components:
       - sdcard_logger
 
