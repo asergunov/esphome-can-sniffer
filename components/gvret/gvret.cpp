@@ -22,21 +22,31 @@ bool is_would_block(ssize_t ret) {
 }
 
 void GVERTComponent::setup() {
+#ifdef USE_TIME
+  if (this->rtc_) {
+    this->rtc_->add_on_time_sync_callback([this] {
+      // micros() - newTimeCorrection = last_loop_time_ - oldTimeCorrection
+      this->time_correction_ += micros() - this->last_loop_time_;
+      this->last_loop_time_ = micros();
+    });
+  }
+#endif // USE_TIME
 
-  int index = 0; 
-  for(auto& bus : this->busses_) {
-    bus->add_callback([this, index](uint32_t can_id, bool extended_id, bool rtr, const std::vector<uint8_t> &data){
+  int index = 0;
+  for (auto &bus : this->busses_) {
+    bus->add_callback([this, index](uint32_t can_id, bool extended_id, bool rtr,
+                                    const std::vector<uint8_t> &data) {
       CAN_FRAME frame;
       frame.can_id = can_id;
       frame.use_extended_id = extended_id;
       frame.remote_transmission_request = rtr;
-      frame.can_data_length_code = std::min<uint8_t>(data.size(), canbus::CAN_MAX_DATA_LENGTH);
+      frame.can_data_length_code =
+          std::min<uint8_t>(data.size(), canbus::CAN_MAX_DATA_LENGTH);
       std::copy_n(data.begin(), frame.can_data_length_code, frame.data);
       this->displayFrame(frame, index);
     });
     index++;
   }
-
 
   ESP_LOGD(TAG, "Creating a socket");
   this->socket_ =
@@ -90,6 +100,7 @@ void GVERTComponent::setup() {
 }
 
 void GVERTComponent::loop() {
+  this->last_loop_time_ = micros();
   for (;;) {
     struct sockaddr_storage source_addr;
     socklen_t addr_len = sizeof(source_addr);
@@ -132,8 +143,8 @@ void GVERTComponent::loop() {
   if (!this->active_connection_->ready())
     return;
 
-  ESP_LOGVV(TAG,"Start reading from socket");
-  for (;this->active_connection_->ready();) {
+  ESP_LOGVV(TAG, "Start reading from socket");
+  for (; this->active_connection_->ready();) {
     ESP_LOGVV(TAG, "Trying to read byte from socket");
     uint8_t incomingByte;
     // Reading one byte at a time is fastest in practice for ESP32 when
@@ -160,7 +171,7 @@ void GVERTComponent::loop() {
     processIncomingByte(incomingByte);
   }
 
-  ESP_LOGVV(TAG,"End reading from socket");
+  ESP_LOGVV(TAG, "End reading from socket");
 }
 
 void GVERTComponent::dump_config() {}
@@ -168,7 +179,7 @@ void GVERTComponent::dump_config() {}
 void GVERTComponent::processIncomingByte(uint8_t in_byte) {
   ESP_LOGVV(TAG, "Processing incoming byte 0x%02X in state %d", in_byte, state);
   uint32_t busSpeed = 0;
-  uint32_t now = micros();
+  uint32_t now = micros() - this->time_correction_;
 
   switch (state) {
   default:
@@ -208,6 +219,11 @@ void GVERTComponent::processIncomingByte(uint8_t in_byte) {
       ESP_LOGV(TAG, "Command is PROTO_TIME_SYNC");
       state = TIME_SYNC;
       step = 0;
+      // drop correction
+      now += this->time_correction_;
+      this->time_correction_ = 0;
+      this->last_loop_time_ = now;
+      // send new time
       transmitBuffer.push_back(0xF1);
       transmitBuffer.push_back(1); // time sync
       transmitBuffer.push_back32(now);
@@ -396,10 +412,10 @@ void GVERTComponent::processIncomingByte(uint8_t in_byte) {
         // temp8 = checksumCalc(buff, step);
         build_out_frame.remote_transmission_request = 0;
         if (out_bus < this->busses_.size()) {
-          ESP_LOGD(TAG,"Sending message to CAN %d", out_bus);
+          ESP_LOGD(TAG, "Sending message to CAN %d", out_bus);
           this->busses_[out_bus]->send_message(&build_out_frame);
         } else {
-          ESP_LOGW(TAG,"Don't have CAN %d to send message", out_bus);
+          ESP_LOGW(TAG, "Don't have CAN %d to send message", out_bus);
         }
       }
       break;

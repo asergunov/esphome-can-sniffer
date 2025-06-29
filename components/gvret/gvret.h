@@ -3,6 +3,7 @@
 #include "esphome/core/defines.h"
 
 #include "commbuffer.h"
+#include <cstdint>
 #include <vector>
 
 #ifdef USE_ESP32_CAN
@@ -15,6 +16,9 @@
 #include "esphome/components/socket/socket.h"
 #include "esphome/core/component.h"
 
+#ifdef USE_TIME
+#include "esphome/components/time/real_time_clock.h"
+#endif
 namespace esphome {
 namespace gvret {
 
@@ -68,23 +72,33 @@ public:
   void setup() override;
   void loop() override;
   void dump_config() override;
-  float get_setup_priority() const override { return setup_priority::AFTER_WIFI; }
+  float get_setup_priority() const override {
+    return setup_priority::AFTER_WIFI;
+  }
 
   void add_canbus(Canbus *canbus) { this->busses_.emplace_back(canbus); }
+#ifdef USE_TIME
+  void set_real_time_clock(time::RealTimeClock *rtc) { this->rtc_ = rtc; }
+#endif
 protected:
   void toggleRXLED() {}
   void displayFrame(CAN_FRAME &frame, int whichBus);
+  void processIncomingByte(uint8_t in_byte);
+  uint8_t checksumCalc(uint8_t *buffer, int length);
+  void setOutput(uint8_t which, bool active);
+
 protected:
   std::vector<Canbus *> busses_;
+#ifdef USE_TIME
+  time::RealTimeClock *rtc_ = nullptr;
+#endif
+  uint32_t last_loop_time_ = 0;
+  uint32_t time_correction_ = 0;
+
   uint16_t port_{23};
   std::unique_ptr<socket::Socket> socket_ = nullptr;
   std::unique_ptr<socket::Socket> active_connection_ = nullptr;
-  bool connected_ = false;
 
-public:
-  void processIncomingByte(uint8_t in_byte);
-
-private:
   CAN_FRAME build_out_frame;
 #ifdef USE_GVRET_CANFD
   CAN_FRAME_FD build_out_fd_frame;
@@ -98,8 +112,6 @@ private:
 #ifdef USE_LAWICE_MODE
   bool lawicelMode = false;
 #endif
-  uint8_t checksumCalc(uint8_t *buffer, int length);
-  void setOutput(uint8_t which, bool active);
 };
 
 } // namespace gvret
